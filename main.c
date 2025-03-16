@@ -1,5 +1,8 @@
 #include "constants.h"
 #include "LED.c"
+#include "tBrain.c"
+
+#define BAUD_RATE 9600
 
 /*----------------------------------------------------------------------------
  * CMSIS-RTOS 'main' function template
@@ -20,6 +23,8 @@ void app_main (void *argument) {
 int main (void) {
     // System Initialization
     SystemCoreClockUpdate();
+		initUART2(BAUD_RATE);
+		initTestGPIO();
     initLEDs();
     // ...
 
@@ -29,6 +34,8 @@ int main (void) {
     movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
     osThreadSuspend(movingFrontLedThreadId);
     osThreadNew(tLED, NULL, NULL);
+	
+		osThreadNew(tBrain, NULL, NULL);
 
     osKernelStart();                      // Start thread execution
     for (;;) {}
