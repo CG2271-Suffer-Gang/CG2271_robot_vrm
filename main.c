@@ -1,5 +1,6 @@
 #include "constants.h"
 #include "LED.c"
+#include "motor.c"
 #include "tBrain.c"
 
 #define BAUD_RATE 9600
