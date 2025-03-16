@@ -35,6 +35,7 @@ int main (void) {
     osThreadSuspend(movingFrontLedThreadId);
     osThreadNew(tLED, NULL, NULL);
     osThreadNew(tBrain, NULL, NULL);
+    osThreadNew(tMotors, NULL, NULL);
 
     osKernelStart();                      // Start thread execution
     for (;;) {}
