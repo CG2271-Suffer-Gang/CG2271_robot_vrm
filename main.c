@@ -16,15 +16,15 @@
  * Application main thread
  *---------------------------------------------------------------------------*/
 void app_main (void *argument) {
-  // ...
-  for (;;) {}
+    // ...
+    for (;;) {}
 }
 
 int main (void) {
     // System Initialization
     SystemCoreClockUpdate();
-		initUART2(BAUD_RATE);
-		initTestGPIO();
+    initUART2(BAUD_RATE);
+    initTestGPIO();
     initLEDs();
     // ...
 
@@ -34,8 +34,7 @@ int main (void) {
     movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
     osThreadSuspend(movingFrontLedThreadId);
     osThreadNew(tLED, NULL, NULL);
-	
-		osThreadNew(tBrain, NULL, NULL);
+    osThreadNew(tBrain, NULL, NULL);
 
     osKernelStart();                      // Start thread execution
     for (;;) {}
