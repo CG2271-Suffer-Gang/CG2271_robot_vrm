@@ -1,8 +1,9 @@
 #include "constants.h"
 
-// Assuming 24MHz, see what happens lol
-#define DELAY_250 5999999
-#define DELAY_500 11999999
+// Bus clock is 12MHz, if not working check bus clock settings
+// Using formula (delay in seconds) * (bus clock freq) - 1
+#define DELAY_250 2999999
+#define DELAY_500 5999999
 
 // Port C pin 3
 #define BACK_LEDS 3
@@ -13,11 +14,11 @@ int front_leds[NUM_FRONT_LEDS] = {5, 6, 10, 11, 12, 13, 16, 17};
 osThreadId_t movingFrontLedThreadId;
 
 void initLEDpins(void) {
-    // Enable Clock to PORTB and PORTD
+    // Enable Clock to PORTC
     SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;
 
     // Front Leds
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < NUM_FRONT_LEDS; i++) {
         PORTC->PCR[front_leds[i]] &= ~PORT_PCR_MUX_MASK;
         PORTC->PCR[front_leds[i]] |= PORT_PCR_MUX(1);
         PTC->PDDR |= MASK(front_leds[i]);
@@ -37,8 +38,10 @@ void initPIT() {
     PIT_MCR = 0;
     PIT_TCTRL0 &= ~(PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK);
     PIT_LDVAL0 = DELAY_250;
+    PIT_TFLG0 = PIT_TFLG_TIF_MASK;
     NVIC_EnableIRQ(PIT_IRQn);
-    PIT_TCTRL0 |= PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK;
+    PIT_TCTRL0 |= PIT_TCTRL_TIE_MASK;
+    PIT_TCTRL0 |= PIT_TCTRL_TEN_MASK;
 }
 
 void initLEDs() {
@@ -54,7 +57,7 @@ void PIT_IRQHandler() {
     PTC->PTOR |= MASK(BACK_LEDS);
 
     // Clear INT Flag
-    PIT_TFLG0 |= PIT_TFLG_TIF_MASK;
+    PIT_TFLG0 = PIT_TFLG_TIF_MASK;
 }
 
 void turnOffAllLeds() {
@@ -90,14 +93,14 @@ void tLED(void *argument) {
         PIT_TCTRL0 &= ~(PIT_TCTRL_TEN_MASK);
         PIT_LDVAL0 = DELAY_500;
         PIT_TCTRL0 |= PIT_TCTRL_TEN_MASK;
-        osDelay(500);
+        osDelay(5000);
 
         osThreadSuspend(movingFrontLedThreadId);
         turnOnAllLeds();
         PIT_TCTRL0 &= ~(PIT_TCTRL_TEN_MASK);
         PIT_LDVAL0 = DELAY_250;
         PIT_TCTRL0 |= PIT_TCTRL_TEN_MASK;
-        osDelay(500);
+        osDelay(5000);
     }
 }
 
