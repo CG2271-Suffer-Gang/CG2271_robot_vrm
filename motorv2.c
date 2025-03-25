@@ -1,36 +1,41 @@
-#include "MKL25Z4.h"                    // Device header
+#include "constants.h"                    // Device header
 
-#define LEFT1_Pin	0
-#define LEFT2_Pin	1
-#define RIGHT1_Pin	2
-#define RIGHT2_Pin	3
+#define LEFT_FORWARD_PIN	0
+#define LEFT_REVERSE_PIN	1
+#define RIGHT_FORWARD_PIN	2
+#define RIGHT_REVERSE_PIN	3
+#define MOD_VALUE 			2000
+#define LEFT_FORWARD 		TPM0_C0V
+#define LEFT_REVERSE 		TPM0_C1V
+#define RIGHT_FORWARD 		TPM0_C2V
+#define RIGHT_REVERSE 		TPM0_C3V
+#define DUTY_CYCLE			(mod, percent) (mod * percent / 100 - 1)
 
-volatile static short forwardState = 1;	// 1 for forward, 0 for stop, -1 for reverse
-// volatile static short directionState = 1; // 1 for right, 0 for straight, -1 for left
-volatile static short speedLevel = 2;
+volatile static uint8_t directionState = 2;	// number pad like direction
+volatile static uint8_t speedLevel = 2;
 
 void initMotorPWM(void)
 {
     SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK;
 
-    PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
-    PORTD->PCR[LEFT1_Pin] |= PORT_PCR_MUX(3);
+    PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+    PORTD->PCR[LEFT_FORWARD_PIN] |= PORT_PCR_MUX(3);
 
-    PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
-    PORTD->PCR[LEFT2_Pin] |= PORT_PCR_MUX(3);
+    PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+    PORTD->PCR[LEFT_REVERSE_PIN] |= PORT_PCR_MUX(3);
 	
-	PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
-    PORTD->PCR[RIGHT1_Pin] |= PORT_PCR_MUX(3);
+	PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+    PORTD->PCR[RIGHT_FORWARD_PIN] |= PORT_PCR_MUX(3);
 
-    PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
-    PORTD->PCR[RIGHT2_Pin] |= PORT_PCR_MUX(3);
+    PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+    PORTD->PCR[RIGHT_REVERSE_PIN] |= PORT_PCR_MUX(3);
 	
 	SIM->SCGC6 |= SIM_SCGC6_TPM0_MASK;
 
     SIM->SOPT2 &= ~SIM_SOPT2_TPMSRC_MASK;
     SIM->SOPT2 |= SIM_SOPT2_TPMSRC(1);
 
-    TPM0->MOD = 1999; // aim for 24kHz frequency
+    TPM0->MOD = DUTY_CYCLE(MOD_VALUE, 100); // aim for 24kHz frequency
 
     TPM0->SC &= ~((TPM_SC_CMOD_MASK) | (TPM_SC_PS_MASK));
     TPM0->SC |= (TPM_SC_CMOD(1) | TPM_SC_PS(0));	// PS set to 1
@@ -48,148 +53,153 @@ void initMotorPWM(void)
 	TPM0_C3SC &= ~((TPM_CnSC_ELSB_MASK) | (TPM_CnSC_MSB_MASK) | (TPM_CnSC_MSA_MASK));
     TPM0_C3SC |= (TPM_CnSC_ELSB(1) | TPM_CnSC_MSB(1)); // edge-aligned, high-true pulses
 		
-	TPM0_C0V = 1000;
-	TPM0_C1V = 1000;
-	TPM0_C2V = 1000;
-	TPM0_C3V = 1000;
+	LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50);
+	LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
+	RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50);
+	RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
 }
 
 void changeMotorSpeed() {
 	switch(speedLevel) {
 		//case 0:
-			//PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
-			//PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
+			//PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+			//PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
 			//break;
 		case 1:
-			TPM0_C0V = 499; // 25% speed
-			TPM0_C1V = 499;
-			TPM0_C2V = 499;
-			TPM0_C3V = 499;
+			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 25); // 25% speed
+			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 25);
+			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 25);
+			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 25);
 			break;
 		case 2:
-			TPM0_C0V = 999; // 50% speed
-			TPM0_C1V = 999;
-			TPM0_C2V = 999;
-			TPM0_C3V = 999;
+			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50); // 50% speed
+			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
+			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50);
+			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
 			break;
 		case 3:
-			TPM0_C0V = 1999; // 100% speed
-			TPM0_C1V = 1999;
-			TPM0_C2V = 1999;
-			TPM0_C3V = 1999;
+			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 100); // 100% speed
+			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 100);
+			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 100);
+			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 100);
 			break;
 	}
 }
 
-void changeRightMotorSpeed() {
-	switch(speedLevel) {
-		//case 0:
-			//PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
-			//PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
-			//break;
-		case 1:
-			TPM0_C0V = 499; // 25% speed
-			TPM0_C1V = 499;
-			break;
-		case 2:
-			TPM0_C0V = 999; // 50% speed
-			TPM0_C1V = 999;
-			break;
-		case 3:
-			TPM0_C0V = 1999; // 100% speed
-			TPM0_C1V = 1999;
-			break;
-	}
-}
+// void changeRightMotorSpeed() {
+// 	switch(speedLevel) {
+// 		//case 0:
+// 			//PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+// 			//PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+// 			//break;
+// 		case 1:
+// 			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 25); // 25% speed
+// 			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 25);
+// 			break;
+// 		case 2:
+// 			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50); // 50% speed
+// 			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
+// 			break;
+// 		case 3:
+// 			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 100); // 100% speed
+// 			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 100);
+// 			break;
+// 	}
+// }
 
-void changeLeftMotorSpeed() {
-	switch(speedLevel) {
-		//case 0:
-			//PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
-			//PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
-			//break;
-		case 1:
-			TPM0_C2V = 499; // 25% speed
-			TPM0_C3V = 499;
-			break;
-		case 2:
-			TPM0_C2V = 999; // 50% speed
-			TPM0_C3V = 999;
-			break;
-		case 3:
-			TPM0_C2V = 1999; // 100% speed
-			TPM0_C3V = 1999;
-			break;
-	}
-}
+// void changeLeftMotorSpeed() {
+// 	switch(speedLevel) {
+// 		//case 0:
+// 			//PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+// 			//PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+// 			//break;
+// 		case 1:
+// 			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 25); // 25% speed
+// 			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 25);
+// 			break;
+// 		case 2:
+// 			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50); // 50% speed
+// 			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
+// 			break;
+// 		case 3:
+// 			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 100); // 100% speed
+// 			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 100);
+// 			break;
+// 	}
+// }
 
-void controlStraightMovement(short newState) {
-	forwardState = newState;
-	switch(newState) {
-		case 1:
-			PORTD->PCR[LEFT1_Pin] |= PORT_PCR_MUX(3);
-			PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
-			PORTD->PCR[RIGHT1_Pin] |= PORT_PCR_MUX(3);
-			PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
-		case 0:
-			PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
-			PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
-			PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
-			PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
-		case -1:
-			PORTD->PCR[LEFT2_Pin] |= PORT_PCR_MUX(3);
-			PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
-			PORTD->PCR[RIGHT2_Pin] |= PORT_PCR_MUX(3);
-			PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
-	}
-}
+// void controlStraightMovement(short newState) {
+// 	directionState = newState;
+// 	switch(newState) {
+// 		case 1:
+// 			PORTD->PCR[LEFT_FORWARD_PIN] |= PORT_PCR_MUX(3);
+// 			PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+// 			PORTD->PCR[RIGHT_FORWARD_PIN] |= PORT_PCR_MUX(3);
+// 			PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+// 		case 0:
+// 			PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+// 			PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+// 			PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+// 			PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+// 		case -1:
+// 			PORTD->PCR[LEFT_REVERSE_PIN] |= PORT_PCR_MUX(3);
+// 			PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+// 			PORTD->PCR[RIGHT_REVERSE_PIN] |= PORT_PCR_MUX(3);
+// 			PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+// 	}
+// }
 
-void controlDirectionMovement(short newState) {
+void controlDirectionMovement() {
 	changeMotorSpeed();
-	switch(forwardState) {
+	switch(directionState) {
 		case 1:
-			if (newState == 1) {
-				PORTD->PCR[LEFT1_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
-				PORTD->PCR[RIGHT1_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
-				TPM0_C0V = TPM0_C2V / 2;
-			}	else if (newState == -1) {
-				PORTD->PCR[LEFT1_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
-				PORTD->PCR[RIGHT1_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
-				TPM0_C2V = TPM0_C0V / 2;
-			}			
-		case 0:
-			if (newState == 1) {
-				PORTD->PCR[LEFT2_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
-				PORTD->PCR[RIGHT1_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
-			} else if (newState == -1) {
-				PORTD->PCR[LEFT1_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
-				PORTD->PCR[RIGHT2_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
-			}
-		case -1:
-			if (newState == 1) {
-				PORTD->PCR[LEFT2_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
-				PORTD->PCR[RIGHT2_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
-				TPM0_C3V = TPM0_C1V / 2;
-			} else if (newState == -1) {
-				PORTD->PCR[LEFT2_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
-				PORTD->PCR[RIGHT2_Pin] |= PORT_PCR_MUX(3);
-				PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
-				TPM0_C1V = TPM0_C3V / 2;
-			}
+			PORTD->PCR[LEFT_FORWARD_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT_FORWARD_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+			LEFT_FORWARD = RIGHT_FORWARD / 2;
+		case 2:
+			PORTD->PCR[LEFT_FORWARD_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT_FORWARD_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+		case 3:
+			PORTD->PCR[LEFT_FORWARD_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT_FORWARD_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+			RIGHT_FORWARD = LEFT_FORWARD / 2;			
+		case 4:
+			PORTD->PCR[LEFT_REVERSE_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT_FORWARD_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+		case 5:
+			PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+		case 6:	
+			PORTD->PCR[LEFT_FORWARD_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT_REVERSE_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+		case 7:
+			PORTD->PCR[LEFT_REVERSE_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT_REVERSE_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+			RIGHT_REVERSE = LEFT_REVERSE / 2;
+		case 8:
+			PORTD->PCR[LEFT_REVERSE_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT_REVERSE_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+		case 9:
+			PORTD->PCR[LEFT_REVERSE_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT_REVERSE_PIN] |= PORT_PCR_MUX(3);
+			PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+			LEFT_REVERSE = RIGHT_REVERSE / 2;
 	}
-}
-
-int main(){
-	initMotorPWM();
 }
