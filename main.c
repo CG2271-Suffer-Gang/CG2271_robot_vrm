@@ -1,7 +1,8 @@
 #include "constants.h"
 #include "LED.c"
-#include "motor.c"
+
 #include "tBrain.c"
+#include "globals.h"
 
 #define BAUD_RATE 9600
 
@@ -18,7 +19,20 @@
  *---------------------------------------------------------------------------*/
 void app_main (void *argument) {
     // ...
-    for (;;) {}
+    for (;;) {
+				directionState = FRONT;
+				controlDirectionMovement();
+				osDelay(1000);
+				directionState = STOP;
+				controlDirectionMovement();
+				osDelay(1000);
+				directionState = BACK;
+				controlDirectionMovement();
+				osDelay(1000);
+				directionState = STOP;
+				controlDirectionMovement();
+				osDelay(1000);
+		}
 }
 
 int main (void) {
@@ -26,19 +40,20 @@ int main (void) {
     SystemCoreClockUpdate();
     initUART2(BAUD_RATE);
     initTestGPIO();
-    initLEDs();
+    //initLEDs();
+		initMotorPWM();
+		
     // ...
 
     osKernelInitialize();                 // Initialize CMSIS-RTOS
-    osThreadNew(app_main, NULL, NULL);    // Create application main thread
+    //osThreadNew(app_main, NULL, NULL);    // Create application main thread
 
-    movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
-    osThreadSuspend(movingFrontLedThreadId);
-    osThreadNew(tLED, NULL, NULL);
+    //movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
+    //osThreadSuspend(movingFrontLedThreadId);
+    //osThreadNew(tLED, NULL, NULL);
     osThreadNew(tBrain, NULL, NULL);
-    osThreadNew(tMotors, NULL, NULL);
-
+    //osThreadNew(tMotors, NULL, NULL);
     osKernelStart();                      // Start thread execution
-    for (;;) {}
+		for (;;){}
 }
 

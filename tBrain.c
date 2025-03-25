@@ -1,8 +1,7 @@
 #include "MKL25Z4.h"
-#include "ESPCommands.h"
-#include "GPIO.h"
 #include "UART2fns.h"
 #include "globals.h"
+#include "motorv2.c"
 
 #define BAUD_RATE 9600
 
@@ -34,8 +33,14 @@ void tBrain(void* argument) {
                 case FRONTRIGHT:
                 case FRONTLEFT:
                 case BACKRIGHT:
+								case STOP:
                     directionState = data;
+										controlDirectionMovement();
                     break;
+								case SLOW:
+								case FAST:
+										speedState = data;
+										changeMotorSpeed();
                 default:
                     break;
             }

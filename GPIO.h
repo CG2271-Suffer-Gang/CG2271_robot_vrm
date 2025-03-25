@@ -7,7 +7,7 @@
 #define RED_LED     18  // PortB Pin 18
 #define GREEN_LED   19  // PortB Pin 19
 #define BLUE_LED    1   // PortD Pin 1
-#define EXTRA_PIN 0     // PortD Pin 0
+#define EXTRA_PIN 4     // PortD Pin 0
 #define MASK(x) (1 << (x))
 
 void initTestGPIO(void) {
@@ -47,10 +47,10 @@ void ledControl(int colour) {
             PTB->PCOR = MASK(GREEN_LED);
             break;
         case BLUE_LED:
-            PTD->PCOR = MASK(BLUE_LED);
+            PTD->PCOR |= MASK(BLUE_LED);
             break;
         case EXTRA_PIN:
-            PTD->PCOR = MASK(EXTRA_PIN);
+            PTD->PCOR |= MASK(EXTRA_PIN);
             break;
         default:
             offRGB();
