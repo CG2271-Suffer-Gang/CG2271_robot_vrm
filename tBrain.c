@@ -33,9 +33,14 @@ void tBrain(void* argument) {
                 case FRONTRIGHT:
                 case FRONTLEFT:
                 case BACKRIGHT:
+								case STOP:
                     directionState = data;
 										controlDirectionMovement();
                     break;
+								case SLOW:
+								case FAST:
+										speedState = data;
+										changeMotorSpeed();
                 default:
                     break;
             }

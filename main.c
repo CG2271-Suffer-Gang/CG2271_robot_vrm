@@ -46,22 +46,14 @@ int main (void) {
     // ...
 
     osKernelInitialize();                 // Initialize CMSIS-RTOS
-    osThreadNew(app_main, NULL, NULL);    // Create application main thread
+    //osThreadNew(app_main, NULL, NULL);    // Create application main thread
 
     //movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
     //osThreadSuspend(movingFrontLedThreadId);
     //osThreadNew(tLED, NULL, NULL);
-    //osThreadNew(tBrain, NULL, NULL);
+    osThreadNew(tBrain, NULL, NULL);
     //osThreadNew(tMotors, NULL, NULL);
     osKernelStart();                      // Start thread execution
-    /* for (;;) {
-				directionState = FRONT;
-				controlDirectionMovement();
-				delay(100000);
-				directionState = BACK;
-				controlDirectionMovement();
-				delay(100000);
-		} */
 		for (;;){}
 }
 

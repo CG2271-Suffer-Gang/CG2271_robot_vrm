@@ -7,6 +7,9 @@ enum ESPCommand {
     FRONTLEFT = 0x34,
     FRONTRIGHT = 0x36,
     BACKLEFT = 0x37,
-    BACKRIGHT = 0x38
+    BACKRIGHT = 0x38,
+		SLOW = 0x39,
+		FAST = 0x40,
+		VICTORY = 0x41
 };
 
