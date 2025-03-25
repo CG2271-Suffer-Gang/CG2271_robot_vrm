@@ -560,6 +560,11 @@
                 </FileArmAds>
               </FileOption>
             </File>
+            <File>
+              <FileName>motor_v2.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\motor_v2.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -1,116 +1,195 @@
 #include "constants.h"
 
-#define FCLK 48 * 10^6
-#define PRESCALAR 3 // sucks that this is hardcoded but ok
-#define CALC_MOD_VALUE(Fpwm) (FCLK / (PRESCALAR * Fpwm)) - 1
-#define MOD_VALUE CALC_MOD_VALUE(8000)
-#define DUTY_CYCLE(mod, duty) (mod * duty) / 100
+#define LEFT1_Pin	0
+#define LEFT2_Pin	1
+#define RIGHT1_Pin	2
+#define RIGHT2_Pin	3
 
-void initTimers() {
-    SIM->SCGC6 |= SIM_SCGC6_TPM1_MASK;
-    SIM->SCGC6 |= SIM_SCGC6_TPM2_MASK;
+volatile static short forwardState = 1;	// 1 for forward, 0 for stop, -1 for reverse
+// volatile static short directionState = 1; // 1 for right, 0 for straight, -1 for left
+volatile static short speedLevel = 2;
+
+void initMotorPWM(void)
+{
+    SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK;
+
+    PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
+    PORTD->PCR[LEFT1_Pin] |= PORT_PCR_MUX(3);
+
+    PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
+    PORTD->PCR[LEFT2_Pin] |= PORT_PCR_MUX(3);
+	
+	PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
+    PORTD->PCR[RIGHT1_Pin] |= PORT_PCR_MUX(3);
+
+    PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
+    PORTD->PCR[RIGHT2_Pin] |= PORT_PCR_MUX(3);
+	
+	SIM->SCGC6 |= SIM_SCGC6_TPM0_MASK;
 
     SIM->SOPT2 &= ~SIM_SOPT2_TPMSRC_MASK;
     SIM->SOPT2 |= SIM_SOPT2_TPMSRC(1);
 
-    // 8kHz according to mod formula as a macro
-    TPM1->MOD = MOD_VALUE;
-    TPM2->MOD = MOD_VALUE;
+    TPM0->MOD = 1999; // aim for 24kHz frequency
 
-    // Timer enable and prescalar
-    TPM1->SC &= ~((TPM_SC_CMOD_MASK) | (TPM_SC_PS_MASK));
-    TPM1->SC |= (TPM_SC_CMOD(1) | TPM_SC_PS(PRESCALAR));
-    TPM1->SC &= ~(TPM_SC_CPWMS_MASK);
+    TPM0->SC &= ~((TPM_SC_CMOD_MASK) | (TPM_SC_PS_MASK));
+    TPM0->SC |= (TPM_SC_CMOD(1) | TPM_SC_PS(0));	// PS set to 1
+    TPM0->SC &= ~(TPM_SC_CPWMS_MASK); // Not center-aligned
 
-    TPM2->SC &= ~((TPM_SC_CMOD_MASK) | (TPM_SC_PS_MASK));
-    TPM2->SC |= (TPM_SC_CMOD(1) | TPM_SC_PS(PRESCALAR));
-    TPM2->SC &= ~(TPM_SC_CPWMS_MASK);
-
-    // Timer settings, duty cycle 0% on init
-    TPM1_C0SC &= ~((TPM_CnSC_ELSB_MASK) | (TPM_CnSC_ELSA_MASK) | (TPM_CnSC_MSB_MASK) | (TPM_CnSC_MSA_MASK));
-    TPM1_C0SC |= (TPM_CnSC_ELSB(1) | TPM_CnSC_MSB(1));
-
-    TPM1_C0V = DUTY_CYCLE(MOD_VALUE, 0);
-    TPM1_C1V = DUTY_CYCLE(MOD_VALUE, 0);
-
-    TPM2_C0SC &= ~((TPM_CnSC_ELSB_MASK) | (TPM_CnSC_ELSA_MASK) | (TPM_CnSC_MSB_MASK) | (TPM_CnSC_MSA_MASK));
-    TPM2_C0SC |= (TPM_CnSC_ELSB(1) | TPM_CnSC_MSB(1));
-
-    TPM2_C0V = DUTY_CYCLE(MOD_VALUE, 0);
-    TPM2_C1V = DUTY_CYCLE(MOD_VALUE, 0);
+    TPM0_C0SC &= ~((TPM_CnSC_ELSB_MASK) | (TPM_CnSC_MSB_MASK) | (TPM_CnSC_MSA_MASK));
+    TPM0_C0SC |= (TPM_CnSC_ELSB(1) | TPM_CnSC_MSB(1)); // edge-aligned, high-true pulses
+		
+	TPM0_C1SC &= ~((TPM_CnSC_ELSB_MASK) | (TPM_CnSC_MSB_MASK) | (TPM_CnSC_MSA_MASK));
+    TPM0_C1SC |= (TPM_CnSC_ELSB(1) | TPM_CnSC_MSB(1)); // edge-aligned, high-true pulses
+		
+	TPM0_C2SC &= ~((TPM_CnSC_ELSB_MASK) | (TPM_CnSC_MSB_MASK) | (TPM_CnSC_MSA_MASK));
+    TPM0_C2SC |= (TPM_CnSC_ELSB(1) | TPM_CnSC_MSB(1)); // edge-aligned, high-true pulses
+		
+	TPM0_C3SC &= ~((TPM_CnSC_ELSB_MASK) | (TPM_CnSC_MSB_MASK) | (TPM_CnSC_MSA_MASK));
+    TPM0_C3SC |= (TPM_CnSC_ELSB(1) | TPM_CnSC_MSB(1)); // edge-aligned, high-true pulses
+		
+	TPM0_C0V = 1000;
+	TPM0_C1V = 1000;
+	TPM0_C2V = 1000;
+	TPM0_C3V = 1000;
 }
 
-void initPWMpins() {
-    SIM_SCGC5 |= SIM_SCGC5_PORTB_MASK;
-
-    // Port B0-B3
-    for (int i = 0; i < 4; i++) {
-        PORTB->PCR[i] &= ~PORT_PCR_MUX_MASK;
-        PORTB->PCR[i] |= PORT_PCR_MUX(3);
-    }
+void changeMotorSpeed() {
+	switch(speedLevel) {
+		//case 0:
+			//PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
+			//PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
+			//break;
+		case 1:
+			TPM0_C0V = 499; // 25% speed
+			TPM0_C1V = 499;
+			TPM0_C2V = 499;
+			TPM0_C3V = 499;
+			break;
+		case 2:
+			TPM0_C0V = 999; // 50% speed
+			TPM0_C1V = 999;
+			TPM0_C2V = 999;
+			TPM0_C3V = 999;
+			break;
+		case 3:
+			TPM0_C0V = 1999; // 100% speed
+			TPM0_C1V = 1999;
+			TPM0_C2V = 1999;
+			TPM0_C3V = 1999;
+			break;
+	}
 }
 
-void initMotors() {
-    initPWMpins();
-    initTimers();
+void changeRightMotorSpeed() {
+	switch(speedLevel) {
+		//case 0:
+			//PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
+			//PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
+			//break;
+		case 1:
+			TPM0_C0V = 499; // 25% speed
+			TPM0_C1V = 499;
+			break;
+		case 2:
+			TPM0_C0V = 999; // 50% speed
+			TPM0_C1V = 999;
+			break;
+		case 3:
+			TPM0_C0V = 1999; // 100% speed
+			TPM0_C1V = 1999;
+			break;
+	}
 }
 
-void forward() {
-    TPM1_C0V = DUTY_CYCLE(MOD_VALUE, 50);
-    TPM1_C1V = DUTY_CYCLE(MOD_VALUE, 0);
-    TPM2_C0V = DUTY_CYCLE(MOD_VALUE, 50);
-    TPM2_C1V = DUTY_CYCLE(MOD_VALUE, 0);
+void changeLeftMotorSpeed() {
+	switch(speedLevel) {
+		//case 0:
+			//PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
+			//PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
+			//break;
+		case 1:
+			TPM0_C2V = 499; // 25% speed
+			TPM0_C3V = 499;
+			break;
+		case 2:
+			TPM0_C2V = 999; // 50% speed
+			TPM0_C3V = 999;
+			break;
+		case 3:
+			TPM0_C2V = 1999; // 100% speed
+			TPM0_C3V = 1999;
+			break;
+	}
 }
 
-void reverse() {
-    TPM1_C0V = DUTY_CYCLE(MOD_VALUE, 0);
-    TPM1_C1V = DUTY_CYCLE(MOD_VALUE, 50);
-    TPM2_C0V = DUTY_CYCLE(MOD_VALUE, 0);
-    TPM2_C1V = DUTY_CYCLE(MOD_VALUE, 50);
+void controlStraightMovement(short newState) {
+	forwardState = newState;
+	switch(newState) {
+		case 1:
+			PORTD->PCR[LEFT1_Pin] |= PORT_PCR_MUX(3);
+			PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT1_Pin] |= PORT_PCR_MUX(3);
+			PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
+		case 0:
+			PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
+		case -1:
+			PORTD->PCR[LEFT2_Pin] |= PORT_PCR_MUX(3);
+			PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
+			PORTD->PCR[RIGHT2_Pin] |= PORT_PCR_MUX(3);
+			PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
+	}
 }
 
-void left() {
-    TPM1_C0V = DUTY_CYCLE(MOD_VALUE, 50);
-    TPM1_C1V = DUTY_CYCLE(MOD_VALUE, 0);
-    TPM2_C0V = DUTY_CYCLE(MOD_VALUE, 0);
-    TPM2_C1V = DUTY_CYCLE(MOD_VALUE, 50);
+void controlDirectionMovement(short newState) {
+	changeMotorSpeed();
+	switch(forwardState) {
+		case 1:
+			if (newState == 1) {
+				PORTD->PCR[LEFT1_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
+				PORTD->PCR[RIGHT1_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
+				TPM0_C0V = TPM0_C2V / 2;
+			}	else if (newState == -1) {
+				PORTD->PCR[LEFT1_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
+				PORTD->PCR[RIGHT1_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
+				TPM0_C2V = TPM0_C0V / 2;
+			}			
+		case 0:
+			if (newState == 1) {
+				PORTD->PCR[LEFT2_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
+				PORTD->PCR[RIGHT1_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[RIGHT2_Pin] &= ~PORT_PCR_MUX_MASK;
+			} else if (newState == -1) {
+				PORTD->PCR[LEFT1_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[LEFT2_Pin] &= ~PORT_PCR_MUX_MASK;
+				PORTD->PCR[RIGHT2_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
+			}
+		case -1:
+			if (newState == 1) {
+				PORTD->PCR[LEFT2_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
+				PORTD->PCR[RIGHT2_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
+				TPM0_C3V = TPM0_C1V / 2;
+			} else if (newState == -1) {
+				PORTD->PCR[LEFT2_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[LEFT1_Pin] &= ~PORT_PCR_MUX_MASK;
+				PORTD->PCR[RIGHT2_Pin] |= PORT_PCR_MUX(3);
+				PORTD->PCR[RIGHT1_Pin] &= ~PORT_PCR_MUX_MASK;
+				TPM0_C1V = TPM0_C3V / 2;
+			}
+	}
 }
 
-void right() {
-    TPM1_C0V = DUTY_CYCLE(MOD_VALUE, 0);
-    TPM1_C1V = DUTY_CYCLE(MOD_VALUE, 50);
-    TPM2_C0V = DUTY_CYCLE(MOD_VALUE, 50);
-    TPM2_C1V = DUTY_CYCLE(MOD_VALUE, 0);
+int main(){
+	initMotorPWM();
 }
-
-void stop() {
-    TPM1_C0V = DUTY_CYCLE(MOD_VALUE, 0);
-    TPM1_C1V = DUTY_CYCLE(MOD_VALUE, 0);
-    TPM2_C0V = DUTY_CYCLE(MOD_VALUE, 0);
-    TPM2_C1V = DUTY_CYCLE(MOD_VALUE, 0);
-}
-
-void tMotors(void* argument) {
-    while (1) {
-        forward();
-        osDelay(500);
-        stop();
-        osDelay(500);
-
-        reverse();
-        osDelay(500);
-        stop();
-        osDelay(500);
-
-        left();
-        osDelay(500);
-        stop();
-        osDelay(500);
-
-        right();
-        osDelay(500);
-        stop();
-        osDelay(500);
-    }
-}
-
