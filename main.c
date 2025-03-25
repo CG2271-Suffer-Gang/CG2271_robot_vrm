@@ -39,7 +39,7 @@ int main (void) {
     // System Initialization
     SystemCoreClockUpdate();
     initUART2(BAUD_RATE);
-    //initTestGPIO();
+    initTestGPIO();
     //initLEDs();
 		initMotorPWM();
 		

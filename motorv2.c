@@ -4,12 +4,12 @@
 #include "GPIO.h"
 
 #define LEFT_FORWARD_PIN	0
-#define LEFT_REVERSE_PIN	1
+#define LEFT_REVERSE_PIN	5
 #define RIGHT_FORWARD_PIN	2
 #define RIGHT_REVERSE_PIN	3
 #define MOD_VALUE 			600
 #define LEFT_FORWARD 		TPM0_C0V
-#define LEFT_REVERSE 		TPM0_C1V
+#define LEFT_REVERSE 		TPM0_C5V
 #define RIGHT_FORWARD 		TPM0_C2V
 #define RIGHT_REVERSE 		TPM0_C3V
 #define DUTY_CYCLE(mod, percent) (mod * percent / 100 - 1)
@@ -39,7 +39,7 @@ void initMotorPWM(void)
     PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
     onPin(LEFT_REVERSE_PIN);
 	
-	PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
+		PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
     onPin(RIGHT_FORWARD_PIN);
 
     PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
@@ -174,6 +174,7 @@ void controlDirectionMovement() {
 			onPin(RIGHT_FORWARD_PIN);
 			offPin(RIGHT_REVERSE_PIN);
 			LEFT_FORWARD = RIGHT_FORWARD / 2;
+			break;
 		case FRONT:
 			onPin(LEFT_FORWARD_PIN);
 			offPin(LEFT_REVERSE_PIN);
@@ -181,45 +182,54 @@ void controlDirectionMovement() {
 			offPin(RIGHT_REVERSE_PIN);
 			offRGB();
 			ledControl(RED_LED);
+			break;
 		case FRONTRIGHT:
 			onPin(LEFT_FORWARD_PIN);
 			offPin(LEFT_REVERSE_PIN);
 			onPin(RIGHT_FORWARD_PIN);
 			offPin(RIGHT_REVERSE_PIN);
-			RIGHT_FORWARD = LEFT_FORWARD / 2;			
+			RIGHT_FORWARD = LEFT_FORWARD / 2;
+			break;
 		case LEFT:
 			onPin(LEFT_REVERSE_PIN);
 			offPin(LEFT_FORWARD_PIN);
 			onPin(RIGHT_FORWARD_PIN);
 			offPin(RIGHT_REVERSE_PIN);
+			break;
 		case STOP:
 			offPin(LEFT_FORWARD_PIN);
 			offPin(LEFT_REVERSE_PIN);
 			offPin(RIGHT_FORWARD_PIN);
 			offPin(RIGHT_REVERSE_PIN);
+			offRGB();
+			break;
 		case RIGHT:	
 			onPin(LEFT_FORWARD_PIN);
 			offPin(LEFT_REVERSE_PIN);
 			onPin(RIGHT_REVERSE_PIN);
 			offPin(RIGHT_FORWARD_PIN);
+			break;
 		case BACKLEFT:
 			onPin(LEFT_REVERSE_PIN);
 			offPin(LEFT_FORWARD_PIN);
 			onPin(RIGHT_REVERSE_PIN);
 			offPin(RIGHT_FORWARD_PIN);
 			RIGHT_REVERSE = LEFT_REVERSE / 2;
+			break;
 		case BACK:
 			onPin(LEFT_REVERSE_PIN);
 			offPin(LEFT_FORWARD_PIN);
 			onPin(RIGHT_REVERSE_PIN);
 			offPin(RIGHT_FORWARD_PIN);
 			offRGB();
-			ledControl(BLUE_LED);
+			ledControl(GREEN_LED);
+			break;
 		case BACKRIGHT:
 			onPin(LEFT_REVERSE_PIN);
 			offPin(LEFT_FORWARD_PIN);
 			onPin(RIGHT_REVERSE_PIN);
 			offPin(RIGHT_FORWARD_PIN);
 			LEFT_REVERSE = RIGHT_REVERSE / 2;
+			break;
 	}
 }
