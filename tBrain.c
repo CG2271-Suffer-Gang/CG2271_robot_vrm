@@ -2,6 +2,7 @@
 #include "ESPCommands.h"
 #include "GPIO.h"
 #include "UART2fns.h"
+#include "globals.h"
 
 #define BAUD_RATE 9600
 
@@ -26,46 +27,20 @@ void tBrain(void* argument) {
             data = UART2_Receive();
             switch(data) {
                 case LEFT:
-                    offRGB();
-                    ledControl(RED_LED);
-                    break;
                 case RIGHT:
-                    offRGB();
-                    ledControl(GREEN_LED);
-                    break;
                 case FRONT:
-                    offRGB();
-                    ledControl(BLUE_LED);
-                    break;
                 case BACK:
-                    offRGB();
-                    ledControl(EXTRA_PIN);
-                    break;
                 case BACKLEFT:
-                    offRGB();
-                    ledControl(RED_LED);
-                    ledControl(EXTRA_PIN);
-                    break;
                 case FRONTRIGHT:
-                    offRGB();
-                    ledControl(GREEN_LED);
-                    ledControl(BLUE_LED);
-                    break;
                 case FRONTLEFT:
-                    offRGB();
-                    ledControl(BLUE_LED);
-                    ledControl(RED_LED);
-                    break;
                 case BACKRIGHT:
-                    offRGB();
-                    ledControl(EXTRA_PIN);
-                    ledControl(GREEN_LED);
+                    directionState = data;
                     break;
                 default:
-                    offRGB();
+                    break;
             }
         }
-        //delay(0x80000);
+        //osDelay(100);
     }
 }
 
