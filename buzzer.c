@@ -61,10 +61,10 @@ void playNotesThread(void *argument) {
     while (1) {
         for (int i = 0; i < NUM_NOTES; i++) {
             setNoteFrequency(notes[i]);  // Set PWM frequency
-            osDelay(pdMS_TO_TICKS(durations[i]));  // Play for the note duration
+            osDelay(durations[i]);  // Play for the note duration
 
             setNoteFrequency(0);  // Small pause to separate notes
-            osDelay(pdMS_TO_TICKS(100));  // Short gap between notes
+            osDelay(50);  // Short gap between notes
         }
     }
 }
