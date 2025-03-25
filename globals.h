@@ -3,6 +3,6 @@
 #define GLOBALS_H
 
 volatile short directionState = 0;
-volatile short speedState = 0;
+volatile short speedState = 3;
 
 #endif
