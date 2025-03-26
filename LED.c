@@ -104,10 +104,10 @@ void stationaryLedPattern() {
 }
 
 void tLED(void *argument) {
-    static uint8_t lastState = STOP;
+    uint8_t lastState = STOP;
 
     while (1) {
-        movementState = directionState;
+        uint8_t movementState = directionState;
         if (directionState != lastState && (directionState == STOP || lastState == STOP)) {
             if (directionState == STOP) {
                 stationaryLedPattern();
