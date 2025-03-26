@@ -51,7 +51,7 @@ int main (void) {
     movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
     osThreadSuspend(movingFrontLedThreadId);
     osThreadNew(tLED, NULL, NULL);
-    //osThreadNew(tBrain, NULL, NULL);
+    //osThreadNew(tBrain, NULL, NULL);  //uncomment for tBrain implementation.
     //osThreadNew(tMotors, NULL, NULL);
     osKernelStart();                      // Start thread execution
 		for (;;){}

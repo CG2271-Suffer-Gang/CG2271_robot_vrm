@@ -107,7 +107,7 @@ void UART2_IRQHandler(void) {
     if (UART2->S1 & UART_S1_RDRF_MASK) {
         if (!Q_Full(&rx_q)) {
             Q_Enqueue(&rx_q, UART2->D);
-						NVIC_SetPendingIRQ(UART1_IRQn);
+						NVIC_SetPendingIRQ(UART1_IRQn); //comment out this line to switch back to tBrain implementation
         }
     }
 }
