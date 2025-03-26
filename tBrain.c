@@ -1,7 +1,6 @@
 #include "MKL25Z4.h"
 #include "UART2fns.h"
 #include "globals.h"
-#include "motorv2.c"
 
 #define BAUD_RATE 9600
 

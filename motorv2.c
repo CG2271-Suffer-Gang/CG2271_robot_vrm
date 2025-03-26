@@ -3,13 +3,13 @@
 #include "globals.h"
 #include "GPIO.h"
 
-#define LEFT_FORWARD_PIN	5
-#define LEFT_REVERSE_PIN	0
-#define RIGHT_FORWARD_PIN	3
-#define RIGHT_REVERSE_PIN	2
+#define LEFT_FORWARD_PIN	0
+#define LEFT_REVERSE_PIN	1
+#define RIGHT_FORWARD_PIN	2
+#define RIGHT_REVERSE_PIN	3
 #define MOD_VALUE 			600
 #define LEFT_FORWARD 		TPM0_C0V
-#define LEFT_REVERSE 		TPM0_C5V
+#define LEFT_REVERSE 		TPM0_C1V
 #define RIGHT_FORWARD 		TPM0_C2V
 #define RIGHT_REVERSE 		TPM0_C3V
 #define DUTY_CYCLE(mod, percent) (mod * percent / 100 - 1)

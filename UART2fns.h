@@ -1,4 +1,5 @@
 #include "MKL25Z4.h"
+#include "motorv2.c"
 
 #define UART_TX_PORTE22 22
 #define UART_RX_PORTE23 23
@@ -75,9 +76,13 @@ void initUART2(uint32_t baud_rate) {
     UART2->S2 = 0;
     UART2->C3 = 0;
 
-    NVIC_SetPriority(UART2_IRQn, 128); 
+    NVIC_SetPriority(UART2_IRQn, 64); 
     NVIC_ClearPendingIRQ(UART2_IRQn); 
     NVIC_EnableIRQ(UART2_IRQn);
+		
+		NVIC_SetPriority(UART1_IRQn, 128);
+		NVIC_ClearPendingIRQ(UART1_IRQn);
+		NVIC_EnableIRQ(UART1_IRQn);
 
     UART2->C2 |= UART_C2_TIE_MASK | UART_C2_RIE_MASK;
     UART2->C2 |= ((UART_C2_TE_MASK) | (UART_C2_RE_MASK));
@@ -102,13 +107,38 @@ void UART2_IRQHandler(void) {
     if (UART2->S1 & UART_S1_RDRF_MASK) {
         if (!Q_Full(&rx_q)) {
             Q_Enqueue(&rx_q, UART2->D);
+						NVIC_SetPendingIRQ(UART1_IRQn);
         }
     }
+}
 
-    // Error Handling ISR
-    // if (UART2->S1 & (UART_S1_OR_MASK | UART_S1_NF_MASK | UART_S1_FE_MASK | UART_S1_PF_MASK)) {
-    //  UART2->S1 |= (UART_S1_OR_MASK | UART_S1_NF_MASK | UART_S1_FE_MASK | UART_S1_PF_MASK); // Clear errors
-    // }
+//use other ISR just to actually execute the commands
+void UART1_IRQHandler(void) {
+		NVIC_ClearPendingIRQ(UART1_IRQn);
+	
+		if (!Q_Empty(&rx_q)) {
+				uint8_t data = Q_Dequeue(&rx_q);
+				switch(data) {
+						case LEFT:
+						case RIGHT:
+						case FRONT:
+						case BACK:
+						case BACKLEFT:
+						case FRONTRIGHT:
+						case FRONTLEFT:
+						case BACKRIGHT:
+						case STOP:
+								directionState = data;
+								controlDirectionMovement();
+								break;
+						case SLOW:
+						case FAST:
+								speedState = data;
+								changeMotorSpeed();
+						default:
+								break;
+				}
+		}
 }
 
 /* UART2 Transmit Function */
