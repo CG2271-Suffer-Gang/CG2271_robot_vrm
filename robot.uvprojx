@@ -616,6 +616,11 @@
                 </FileArmAds>
               </FileOption>
             </File>
+            <File>
+              <FileName>haxISR.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\haxISR.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

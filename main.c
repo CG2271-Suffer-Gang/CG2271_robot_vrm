@@ -40,7 +40,7 @@ int main (void) {
     SystemCoreClockUpdate();
     initUART2(BAUD_RATE);
     initTestGPIO();
-    //initLEDs();
+    initLEDs();
 		initMotorPWM();
 		
     // ...
@@ -48,10 +48,10 @@ int main (void) {
     osKernelInitialize();                 // Initialize CMSIS-RTOS
     //osThreadNew(app_main, NULL, NULL);    // Create application main thread
 
-    //movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
-    //osThreadSuspend(movingFrontLedThreadId);
-    //osThreadNew(tLED, NULL, NULL);
-    osThreadNew(tBrain, NULL, NULL);
+    movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
+    osThreadSuspend(movingFrontLedThreadId);
+    osThreadNew(tLED, NULL, NULL);
+    //osThreadNew(tBrain, NULL, NULL);  //uncomment for tBrain implementation.
     //osThreadNew(tMotors, NULL, NULL);
     osKernelStart();                      // Start thread execution
 		for (;;){}
