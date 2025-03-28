@@ -42,11 +42,14 @@ int main (void) {
     initTestGPIO();
     initLEDs();
 		initMotorPWM();
+    initBuzzerPWM();
 		
     // ...
 
     osKernelInitialize();                 // Initialize CMSIS-RTOS
     //osThreadNew(app_main, NULL, NULL);    // Create application main thread
+
+    buzzerThreadId = osThreadNew(tBuzzer, NULL, NULL);
 
     movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
     osThreadSuspend(movingFrontLedThreadId);
