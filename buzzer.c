@@ -13,16 +13,15 @@
 // Melody sequence: C E G G G G G G G G G E C E D C D E
 const uint16_t notes[] = {C4, E4, G4, G4, G4, G4, G4, G4, G4, G4, G4, E4, C4, E4, D4, C4, D4, E4, 
                             C4, E4, G4, G4, G4, G4, G4, G4, G4, G4, G4, E4, C4, E4, D4, C4, D4, C4};
+
 #define NUM_NOTES (sizeof(notes)/sizeof(notes[0]))
 
 // Rhythm sequence
 const uint16_t durations[] = {250, 250, 125, 125, 125, 125, 125, 125, 125, 125, 250, 250, 250, 250, 500, 250, 250, 500, 
                                 250, 250, 125, 125, 125, 125, 125, 125, 125, 125, 250, 250, 250, 250, 500, 250, 250, 500};
 
-osMutexId_t pwmMutex;  // Mutex for PWM updates
-
 // Function to initialize PWM on TPM1
-void initPWM(void) {
+void initBuzzerPWM(void) {
     SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;  // Enable clock to Port B
     PORTB->PCR[PTB0_Pin] &= ~PORT_PCR_MUX_MASK;
     PORTB->PCR[PTB0_Pin] |= PORT_PCR_MUX(3);  // Set PTB0 to TPM1_CH0
@@ -47,38 +46,19 @@ void setNoteFrequency(uint16_t freq) {
         TPM1_C0V = 0;
         return;
     }
-
     uint16_t mod_value = (375000 / freq) - 1;
-    
-    osMutexAcquire(pwmMutex, osWaitForever);
     TPM1->MOD = mod_value;
     TPM1_C0V = mod_value / 2;  // 50% duty cycle
-    osMutexRelease(pwmMutex);
 }
 
 // RTOS thread for playing notes
-void playNotesThread(void *argument) {
+void tBuzzer(void *argument) {
     while (1) {
         for (int i = 0; i < NUM_NOTES; i++) {
             setNoteFrequency(notes[i]);  // Set PWM frequency
             osDelay(durations[i]);  // Play for the note duration
-
             setNoteFrequency(0);  // Small pause to separate notes
             osDelay(50);  // Short gap between notes
         }
     }
-}
-
-int main(void) {
-    SystemCoreClockUpdate();
-    initPWM();
-
-    osKernelInitialize(); // Initialize CMSIS-RTOS
-    pwmMutex = osMutexNew(NULL);
-
-    osThreadNew(playNotesThread, NULL, NULL); // Create PWM sound thread
-
-    osKernelStart(); // Start RTOS scheduler
-
-    for (;;) {} 
 }
