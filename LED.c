@@ -1,4 +1,6 @@
 #include "constants.h"
+#include "globals.h"
+#include "ESPCommands.h"
 
 // Bus clock is 12MHz, if not working check bus clock settings
 // Using formula (delay in seconds) * (bus clock freq) - 1
@@ -85,22 +87,36 @@ void movingFrontLedThread(void *argument) {
     }
 }
 
-// For now, switch between the two states
-void tLED(void *argument) {
-    while (1) {
-        turnOffAllLeds();
-        osThreadResume(movingFrontLedThreadId);
-        PIT_TCTRL0 &= ~(PIT_TCTRL_TEN_MASK);
-        PIT_LDVAL0 = DELAY_500;
-        PIT_TCTRL0 |= PIT_TCTRL_TEN_MASK;
-        osDelay(5000);
+void movingLedPattern() {
+    turnOffAllLeds();
+    osThreadResume(movingFrontLedThreadId);
+    PIT_TCTRL0 &= ~(PIT_TCTRL_TEN_MASK);
+    PIT_LDVAL0 = DELAY_500;
+    PIT_TCTRL0 |= PIT_TCTRL_TEN_MASK;
+}
 
-        osThreadSuspend(movingFrontLedThreadId);
-        turnOnAllLeds();
-        PIT_TCTRL0 &= ~(PIT_TCTRL_TEN_MASK);
-        PIT_LDVAL0 = DELAY_250;
-        PIT_TCTRL0 |= PIT_TCTRL_TEN_MASK;
-        osDelay(5000);
+void stationaryLedPattern() {
+    osThreadSuspend(movingFrontLedThreadId);
+    turnOnAllLeds();
+    PIT_TCTRL0 &= ~(PIT_TCTRL_TEN_MASK);
+    PIT_LDVAL0 = DELAY_250;
+    PIT_TCTRL0 |= PIT_TCTRL_TEN_MASK;
+}
+
+void tLED(void *argument) {
+    uint8_t lastState = STOP;
+
+    while (1) {
+        uint8_t movementState = directionState;
+        if (directionState != lastState && (directionState == STOP || lastState == STOP)) {
+            if (directionState == STOP) {
+                stationaryLedPattern();
+            } else {
+                movingLedPattern();
+            }
+
+            lastState = directionState;
+        }
     }
 }
 

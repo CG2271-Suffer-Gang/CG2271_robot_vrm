@@ -1,3 +1,6 @@
+#ifndef ESPCommand
+#define ESPCommand
+
 enum ESPCommand {
     LEFT = 0x31,
     RIGHT = 0x30,
@@ -12,4 +15,6 @@ enum ESPCommand {
 		FAST = 0x40,
 		VICTORY = 0x41
 };
+
+#endif
 
