@@ -13,6 +13,7 @@
 #define RIGHT_FORWARD 		TPM0_C2V
 #define RIGHT_REVERSE 		TPM0_C3V
 #define DUTY_CYCLE(mod, percent) (mod * percent / 100 - 1)
+#define DIAG_COEFF  75 / 100
 
 //volatile static uint8_t directionState = 2;	// number pad like direction
 //volatile static uint8_t speedLevel = 2;
@@ -81,13 +82,13 @@ void changeMotorSpeed() {
 			//PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
 			//break;
 		case 1:
-			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50); // 25% speed
+			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50); // 50% speed
 			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
 			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50);
 			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
 			break;
 		case SLOW:
-			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 75); // 50% speed
+			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 75); // 75% speed
 			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 75);
 			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 75);
 			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 75);
@@ -173,7 +174,9 @@ void controlDirectionMovement() {
 			offPin(LEFT_REVERSE_PIN);
 			onPin(RIGHT_FORWARD_PIN);
 			offPin(RIGHT_REVERSE_PIN);
-			LEFT_FORWARD = RIGHT_FORWARD / 2;
+			LEFT_FORWARD = RIGHT_FORWARD * DIAG_COEFF;
+			offRGB();
+			ledControl(RED_LED);
 			break;
 		case FRONT:
 			onPin(LEFT_FORWARD_PIN);
@@ -181,20 +184,22 @@ void controlDirectionMovement() {
 			onPin(RIGHT_FORWARD_PIN);
 			offPin(RIGHT_REVERSE_PIN);
 			offRGB();
-			ledControl(RED_LED);
 			break;
 		case FRONTRIGHT:
 			onPin(LEFT_FORWARD_PIN);
 			offPin(LEFT_REVERSE_PIN);
 			onPin(RIGHT_FORWARD_PIN);
 			offPin(RIGHT_REVERSE_PIN);
-			RIGHT_FORWARD = LEFT_FORWARD / 2;
+			RIGHT_FORWARD = LEFT_FORWARD * DIAG_COEFF;
+			offRGB();
+			ledControl(RED_LED);
 			break;
 		case LEFT:
 			onPin(LEFT_REVERSE_PIN);
 			offPin(LEFT_FORWARD_PIN);
 			onPin(RIGHT_FORWARD_PIN);
 			offPin(RIGHT_REVERSE_PIN);
+			offRGB();
 			break;
 		case STOP:
 			offPin(LEFT_FORWARD_PIN);
@@ -208,13 +213,16 @@ void controlDirectionMovement() {
 			offPin(LEFT_REVERSE_PIN);
 			onPin(RIGHT_REVERSE_PIN);
 			offPin(RIGHT_FORWARD_PIN);
+			offRGB();
 			break;
 		case BACKLEFT:
 			onPin(LEFT_REVERSE_PIN);
 			offPin(LEFT_FORWARD_PIN);
 			onPin(RIGHT_REVERSE_PIN);
 			offPin(RIGHT_FORWARD_PIN);
-			RIGHT_REVERSE = LEFT_REVERSE / 2;
+			RIGHT_REVERSE = LEFT_REVERSE * DIAG_COEFF;
+			offRGB();
+			ledControl(GREEN_LED);
 			break;
 		case BACK:
 			onPin(LEFT_REVERSE_PIN);
@@ -222,14 +230,15 @@ void controlDirectionMovement() {
 			onPin(RIGHT_REVERSE_PIN);
 			offPin(RIGHT_FORWARD_PIN);
 			offRGB();
-			ledControl(GREEN_LED);
 			break;
 		case BACKRIGHT:
 			onPin(LEFT_REVERSE_PIN);
 			offPin(LEFT_FORWARD_PIN);
 			onPin(RIGHT_REVERSE_PIN);
 			offPin(RIGHT_FORWARD_PIN);
-			LEFT_REVERSE = RIGHT_REVERSE / 2;
+			LEFT_REVERSE = RIGHT_REVERSE * DIAG_COEFF;
+			offRGB();
+			ledControl(GREEN_LED);
 			break;
 	}
 }

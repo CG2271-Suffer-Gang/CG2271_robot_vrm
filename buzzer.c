@@ -20,6 +20,10 @@ const uint16_t notes[] = {C4, E4, G4, G4, G4, G4, G4, G4, G4, G4, G4, E4, C4, E4
 const uint16_t durations[] = {250, 250, 125, 125, 125, 125, 125, 125, 125, 125, 250, 250, 250, 250, 500, 250, 250, 500, 
                                 250, 250, 125, 125, 125, 125, 125, 125, 125, 125, 250, 250, 250, 250, 500, 250, 250, 500};
 
+																
+osThreadId_t buzzerThreadId;
+osThreadId_t victoryThreadId;
+																
 // Function to initialize PWM on TPM1
 void initBuzzerPWM(void) {
     SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;  // Enable clock to Port B
@@ -61,4 +65,11 @@ void tBuzzer(void *argument) {
             osDelay(50);  // Short gap between notes
         }
     }
+}
+
+void victoryBuzzer(void *argument){
+		while (1){
+				setNoteFrequency(G4);
+				osDelay(50);
+		}
 }
