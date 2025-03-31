@@ -41,7 +41,7 @@ const uint16_t default_notes[] = {C4, E4, G4, G4, G4, G4, G4, G4, G4, G4, G4, E4
 const uint16_t _default_durations[] = {250, 250, 125, 125, 125, 125, 125, 125, 125, 125, 250, 250, 250, 250, 500, 250, 250, 500, 
                                 250, 250, 125, 125, 125, 125, 125, 125, 125, 125, 250, 250, 250, 250, 500, 250, 250, 500};
 
-#define NUM_NOTES_DEFAULT (sizeof(notes)/sizeof(notes[0]))
+#define NUM_NOTES_DEFAULT (sizeof(default_notes)/sizeof(default_notes[0]))
 
 // Victory sequence
 const uint16_t victory_notes[] = {D5, D5, D5, D5, A4, C5, D5, C5, D5};
@@ -49,7 +49,7 @@ const uint16_t victory_notes[] = {D5, D5, D5, D5, A4, C5, D5, C5, D5};
 // Rhythm sequence
 const uint16_t _victory_durations[] = {160, 160, 160, 500, 500, 500, 320, 160, 1500};
 
-#define NUM_NOTES_VICTORY (sizeof(notes)/sizeof(notes[0]))
+#define NUM_NOTES_VICTORY (sizeof(victory_notes)/sizeof(victory_notes[0]))
 																
 osThreadId_t buzzerThreadId;
 osThreadId_t victoryThreadId;
@@ -85,24 +85,22 @@ void setNoteFrequency(uint16_t freq) {
     TPM1_C0V = mod_value / 2;  // 50% duty cycle
 }
 
-void tBuzzer(void *argument) {
-    while (1) {
-        for (int i = 0; i < NUM_NOTES_DEFAULT; i++) {
-            setNoteFrequency(default_notes[i]);  // Set PWM frequency
-            osDelay(default_durations[i]);  // Play for the note duration
-            setNoteFrequency(0);  // Small pause to separate notes
-            osDelay(25);  // Short gap between notes
-        }
+void playMelody(const uint16_t *notes, const uint16_t *durations, int numNotes) {
+    for (int i = 0; i < numNotes; i++) {
+        setNoteFrequency(notes[i]);  // Set PWM frequency
+        osDelay(durations[i]);  // Play for the note duration
+        setNoteFrequency(0);  // Silence between notes
+        osDelay(25);  // Short gap between notes
     }
 }
 
-void victoryBuzzer(void *argument){
-		while (1){
-            for (int i = 0; i < NUM_NOTES_VICTORY; i++) {
-                setNoteFrequency(victory_notes[i]);
-                osDelay(victory_durations[i]); 
-                setNoteFrequency(0); 
-                osDelay(25);  
-            }
-		}
+void tBuzzer(void *argument) {
+    while (1) {
+        if (buzzerState == 1) {
+            playMelody(victory_notes, victory_durations, NUM_NOTES_VICTORY);  // Play victory melody
+        } else {
+            playMelody(default_notes, default_durations, NUM_NOTES_DEFAULT);  // Play default melody
+        }
+        osDelay(100);
+    }
 }

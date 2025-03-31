@@ -51,8 +51,7 @@ int main (void) {
     //osThreadNew(app_main, NULL, NULL);    // Create application main thread
 
     buzzerThreadId = osThreadNew(tBuzzer, NULL, NULL);
-		victoryThreadId = osThreadNew(victoryBuzzer, NULL, NULL);
-		osThreadSuspend(victoryThreadId);
+   
     movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
     osThreadSuspend(movingFrontLedThreadId);
     osThreadNew(tLED, NULL, NULL);
