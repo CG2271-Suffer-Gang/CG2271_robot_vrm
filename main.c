@@ -50,7 +50,11 @@ int main (void) {
     osKernelInitialize();                 // Initialize CMSIS-RTOS
     //osThreadNew(app_main, NULL, NULL);    // Create application main thread
 
+    // Buzzer Threads
     buzzerThreadId = osThreadNew(tBuzzer, NULL, NULL);
+    defaultBuzzerThreadId = osThreadNew(defaultBuzzerThread, NULL, NULL);
+    victoryBuzzerThreadId = osThreadNew(victoryBuzzerThread, NULL, NULL);
+    osThreadSuspend(victoryBuzzerThreadId);
    
     movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
     osThreadSuspend(movingFrontLedThreadId);
