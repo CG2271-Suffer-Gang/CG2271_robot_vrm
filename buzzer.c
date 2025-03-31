@@ -4,22 +4,52 @@
 
 #define PTB0_Pin 0  // Define PTB0 pin number
 
-// Note frequencies (in Hz) for the C major scale
+// Note frequencies (in Hz)
 #define C4  262
+#define Cs4 277
 #define D4  294
+#define Ds4 311
 #define E4  330
+#define F4  349
+#define Fs4 370
 #define G4  392
+#define Gs4 415
+#define A4  440
+#define As4 466
+#define B4  494
 
-// Melody sequence: C E G G G G G G G G G E C E D C D E
-const uint16_t notes[] = {C4, E4, G4, G4, G4, G4, G4, G4, G4, G4, G4, E4, C4, E4, D4, C4, D4, E4, 
+#define C5  523
+#define Cs5 554
+#define D5  587
+#define Ds5 622
+#define E5  659
+#define F5  698
+#define Fs5 740
+#define G5  784
+#define Gs5 831
+#define A5  880
+#define As5 932
+#define B5  988
+
+#define C6  1047
+
+// Melody sequence
+const uint16_t default_notes[] = {C4, E4, G4, G4, G4, G4, G4, G4, G4, G4, G4, E4, C4, E4, D4, C4, D4, E4, 
                             C4, E4, G4, G4, G4, G4, G4, G4, G4, G4, G4, E4, C4, E4, D4, C4, D4, C4};
 
-#define NUM_NOTES (sizeof(notes)/sizeof(notes[0]))
-
 // Rhythm sequence
-const uint16_t durations[] = {250, 250, 125, 125, 125, 125, 125, 125, 125, 125, 250, 250, 250, 250, 500, 250, 250, 500, 
+const uint16_t _default_durations[] = {250, 250, 125, 125, 125, 125, 125, 125, 125, 125, 250, 250, 250, 250, 500, 250, 250, 500, 
                                 250, 250, 125, 125, 125, 125, 125, 125, 125, 125, 250, 250, 250, 250, 500, 250, 250, 500};
 
+#define NUM_NOTES_DEFAULT (sizeof(default_notes)/sizeof(default_notes[0]))
+
+// Victory sequence
+const uint16_t victory_notes[] = {D5, D5, D5, D5, A4, C5, D5, C5, D5};
+
+// Rhythm sequence
+const uint16_t _victory_durations[] = {160, 160, 160, 500, 500, 500, 320, 160, 1500};
+
+#define NUM_NOTES_VICTORY (sizeof(victory_notes)/sizeof(victory_notes[0]))
 																
 osThreadId_t buzzerThreadId;
 osThreadId_t victoryThreadId;
@@ -55,21 +85,22 @@ void setNoteFrequency(uint16_t freq) {
     TPM1_C0V = mod_value / 2;  // 50% duty cycle
 }
 
-// RTOS thread for playing notes
-void tBuzzer(void *argument) {
-    while (1) {
-        for (int i = 0; i < NUM_NOTES; i++) {
-            setNoteFrequency(notes[i]);  // Set PWM frequency
-            osDelay(durations[i]);  // Play for the note duration
-            setNoteFrequency(0);  // Small pause to separate notes
-            osDelay(50);  // Short gap between notes
-        }
+void playMelody(const uint16_t *notes, const uint16_t *durations, int numNotes) {
+    for (int i = 0; i < numNotes; i++) {
+        setNoteFrequency(notes[i]);  // Set PWM frequency
+        osDelay(durations[i]);  // Play for the note duration
+        setNoteFrequency(0);  // Silence between notes
+        osDelay(25);  // Short gap between notes
     }
 }
 
-void victoryBuzzer(void *argument){
-		while (1){
-				setNoteFrequency(G4);
-				osDelay(50);
-		}
+void tBuzzer(void *argument) {
+    while (1) {
+        if (buzzerState == 1) {
+            playMelody(victory_notes, victory_durations, NUM_NOTES_VICTORY);  // Play victory melody
+        } else {
+            playMelody(default_notes, default_durations, NUM_NOTES_DEFAULT);  // Play default melody
+        }
+        osDelay(100);
+    }
 }
