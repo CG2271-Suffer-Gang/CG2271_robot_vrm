@@ -52,7 +52,8 @@ const uint16_t _victory_durations[] = {160, 160, 160, 500, 500, 500, 320, 160, 1
 #define NUM_NOTES_VICTORY (sizeof(victory_notes)/sizeof(victory_notes[0]))
 																
 osThreadId_t buzzerThreadId;
-osThreadId_t victoryThreadId;
+osThreadId_t defaultBuzzerThreadId;
+osThreadId_t victoryBuzzerThreadId;
 																
 // Function to initialize PWM on TPM1
 void initBuzzerPWM(void) {
@@ -75,7 +76,7 @@ void initBuzzerPWM(void) {
 
 // Function to set a specific note frequency
 void setNoteFrequency(uint16_t freq) {
-    if (freq == 0) { // Silence 
+    if (freq == 0) { 
         TPM1->MOD = 0;
         TPM1_C0V = 0;
         return;
@@ -94,13 +95,39 @@ void playMelody(const uint16_t *notes, const uint16_t *durations, int numNotes) 
     }
 }
 
-void tBuzzer(void *argument) {
+void defaultBuzzerThread(void *argument){
     while (1) {
-        if (buzzerState == 1) {
-            playMelody(victory_notes, victory_durations, NUM_NOTES_VICTORY);  // Play victory melody
-        } else {
-            playMelody(default_notes, default_durations, NUM_NOTES_DEFAULT);  // Play default melody
-        }
+        playMelody(default_notes, _default_durations, NUM_NOTES_DEFAULT);
         osDelay(100);
+    }
+}
+
+void victoryBuzzerThread(void *argument){
+    while (1) {
+        osThreadSuspend(victoryThreadId);
+        playMelody(victory_notes, victory_durations, NUM_NOTES_VICTORY);
+        buzzerState = 0;
+    }
+}
+
+// Function to switch threads
+void buzzerControl() {
+    if (buzzerState == 1) {
+        osThreadSuspend(defaultBuzzerThreadId);
+        osThreadResume(victoryBuzzerThreadId);
+    } else {
+        osThreadSuspend(victoryBuzzerThreadId);
+        osThreadResume(defaultBuzzerThreadId);
+    }
+}
+
+void tBuzzer(void *argument) {
+    uint8_t lastState = 0;
+
+    while (1) {
+        if (buzzerState != lastState) {
+            buzzerControl();
+            lastState = buzzerState;
+        }
     }
 }
