@@ -51,13 +51,15 @@ int main (void) {
     //osThreadNew(app_main, NULL, NULL);    // Create application main thread
 
     // Buzzer Threads
-    buzzerThreadId = osThreadNew(tBuzzer, NULL, NULL);
     defaultBuzzerThreadId = osThreadNew(defaultBuzzerThread, NULL, NULL);
     victoryBuzzerThreadId = osThreadNew(victoryBuzzerThread, NULL, NULL);
     osThreadSuspend(victoryBuzzerThreadId);
+		buzzerThreadId = osThreadNew(tBuzzer, NULL, NULL);
+    
    
     movingFrontLedThreadId = osThreadNew(movingFrontLedThread, NULL, NULL);
     osThreadSuspend(movingFrontLedThreadId);
+		turnOnAllLeds();
     osThreadNew(tLED, NULL, NULL);
     //osThreadNew(tBrain, NULL, NULL);  //uncomment for tBrain implementation.
     //osThreadNew(tMotors, NULL, NULL);

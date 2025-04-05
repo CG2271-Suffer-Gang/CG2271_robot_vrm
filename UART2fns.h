@@ -135,6 +135,10 @@ void UART1_IRQHandler(void) {
 						case FAST:
 								speedState = data;
 								changeMotorSpeed();
+								break;
+						case VICTORY:
+                buzzerState = !buzzerState;
+                break;
 						default:
 								break;
 				}
