@@ -47,7 +47,7 @@ const uint16_t _default_durations[] = {250, 250, 125, 125, 125, 125, 125, 125, 1
 const uint16_t victory_notes[] = {D5, D5, D5, D5, A4, C5, D5, C5, D5};
 
 // Rhythm sequence
-const uint16_t _victory_durations[] = {160, 160, 160, 500, 500, 500, 320, 160, 1500};
+const uint16_t victory_durations[] = {160, 160, 160, 500, 500, 500, 320, 160, 1500};
 
 #define NUM_NOTES_VICTORY (sizeof(victory_notes)/sizeof(victory_notes[0]))
 																
@@ -83,7 +83,7 @@ void setNoteFrequency(uint16_t freq) {
     }
     uint16_t mod_value = (375000 / freq) - 1;
     TPM1->MOD = mod_value;
-    TPM1_C0V = mod_value / 2;  // 50% duty cycle
+    TPM1_C0V = mod_value * 3 / 4;  // 50% duty cycle
 }
 
 void playMelody(const uint16_t *notes, const uint16_t *durations, int numNotes) {
@@ -104,9 +104,9 @@ void defaultBuzzerThread(void *argument){
 
 void victoryBuzzerThread(void *argument){
     while (1) {
-        osThreadSuspend(victoryThreadId);
+        //osThreadSuspend(victoryBuzzerThreadId);
         playMelody(victory_notes, victory_durations, NUM_NOTES_VICTORY);
-        buzzerState = 0;
+        //buzzerState = 0;
     }
 }
 
