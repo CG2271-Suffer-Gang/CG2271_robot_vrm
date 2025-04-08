@@ -44,7 +44,8 @@ const uint16_t _default_durations[] = {250, 250, 125, 125, 125, 125, 125, 125, 1
 #define NUM_NOTES_DEFAULT (sizeof(default_notes)/sizeof(default_notes[0]))
 
 // Victory sequence
-const uint16_t victory_notes[] = {D5, D5, D5, D5, A4, C5, D5, C5, D5};
+const uint16_t victory_notes[] = {G5, G5, G5, G5, D5, F5, G5, F5, G5}; // higher
+//const uint16_t victory_notes[] = {D5, D5, D5, D5, A4, C5, D5, C5, D5}; // lower
 
 // Rhythm sequence
 const uint16_t victory_durations[] = {160, 160, 160, 500, 500, 500, 320, 160, 1500};
@@ -83,7 +84,7 @@ void setNoteFrequency(uint16_t freq) {
     }
     uint16_t mod_value = (375000 / freq) - 1;
     TPM1->MOD = mod_value;
-    TPM1_C0V = mod_value * 3 / 4;  // 50% duty cycle
+    TPM1_C0V = mod_value / 4;  // 50% duty cycle
 }
 
 void playMelody(const uint16_t *notes, const uint16_t *durations, int numNotes) {
@@ -91,7 +92,7 @@ void playMelody(const uint16_t *notes, const uint16_t *durations, int numNotes) 
         setNoteFrequency(notes[i]);  // Set PWM frequency
         osDelay(durations[i]);  // Play for the note duration
         setNoteFrequency(0);  // Silence between notes
-        osDelay(25);  // Short gap between notes
+        osDelay(10);  // Short gap between notes
     }
 }
 
