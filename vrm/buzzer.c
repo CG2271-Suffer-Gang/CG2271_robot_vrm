@@ -84,7 +84,7 @@ void setNoteFrequency(uint16_t freq) {
     }
     uint16_t mod_value = (375000 / freq) - 1;
     TPM1->MOD = mod_value;
-    TPM1_C0V = mod_value / 4;  // 50% duty cycle
+    TPM1_C0V = mod_value * 4 / 10;  // 50% duty cycle
 }
 
 void playMelody(const uint16_t *notes, const uint16_t *durations, int numNotes) {

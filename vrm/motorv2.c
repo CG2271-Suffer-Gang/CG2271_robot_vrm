@@ -14,7 +14,8 @@
 #define RIGHT_REVERSE 		TPM0_C3V
 #define DUTY_CYCLE(mod, percent) (mod * percent / 100 - 1)
 #define DIAG_COEFF  1 / 10
-#define TURN_COEFF  1
+#define TURN_COEFF  3 / 4
+#define NEW_TURN_COEFF  (600 * 50 / 100) - 1
 
 //volatile static uint8_t directionState = 2;	// number pad like direction
 //volatile static uint8_t speedLevel = 2;
@@ -29,6 +30,12 @@ void offPin(uint8_t pin) {
 	PORTD->PCR[pin] &= ~PORT_PCR_MUX_MASK;
 	PORTD->PCR[pin] |= PORT_PCR_MUX(1);
 	PTD->PCOR |= MASK(pin);
+}
+
+void highPin(uint8_t pin) {
+	PORTD->PCR[pin] &= ~PORT_PCR_MUX_MASK;
+	PORTD->PCR[pin] |= PORT_PCR_MUX(1);
+	PTD->PSOR |= MASK(pin);
 }
 
 void initMotorPWM(void)
@@ -78,108 +85,39 @@ void initMotorPWM(void)
 
 void changeMotorSpeed() {
 	switch(speedState) {
-		//case 0:
-			//PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
-			//PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
-			//break;
-		case 1:
-			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50); // 50% speed
-			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
-			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50);
-			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
-			break;
 		case SLOW:
-			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 75); // 75% speed
-			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 75);
-			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 75);
-			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 75);
+			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 80); // 80% speed
+			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 80);
+			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 80);
+			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 80);
+			offRGB();
+			ledControl(RED_LED);
 			break;
 		case FAST:
 			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 100); // 100% speed
 			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 100);
 			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 100);
 			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 100);
+			offRGB();
 			break;
 	}
 }
 
-// void changeRightMotorSpeed() {
-// 	switch(speedLevel) {
-// 		//case 0:
-// 			//PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
-// 			//PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
-// 			//break;
-// 		case 1:
-// 			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 25); // 25% speed
-// 			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 25);
-// 			break;
-// 		case 2:
-// 			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50); // 50% speed
-// 			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
-// 			break;
-// 		case 3:
-// 			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 100); // 100% speed
-// 			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 100);
-// 			break;
-// 	}
-// }
-
-// void changeLeftMotorSpeed() {
-// 	switch(speedLevel) {
-// 		//case 0:
-// 			//PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
-// 			//PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
-// 			//break;
-// 		case 1:
-// 			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 25); // 25% speed
-// 			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 25);
-// 			break;
-// 		case 2:
-// 			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 50); // 50% speed
-// 			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 50);
-// 			break;
-// 		case 3:
-// 			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 100); // 100% speed
-// 			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 100);
-// 			break;
-// 	}
-// }
-
-// void controlStraightMovement(short newState) {
-// 	directionState = newState;
-// 	switch(newState) {
-// 		case 1:
-// 			onPin(LEFT_FORWARD_PIN);
-// 			PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
-// 			onPin(RIGHT_FORWARD_PIN);
-// 			PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
-// 		case 0:
-// 			PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
-// 			PORTD->PCR[LEFT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
-// 			PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
-// 			PORTD->PCR[RIGHT_REVERSE_PIN] &= ~PORT_PCR_MUX_MASK;
-// 		case -1:
-// 			onPin(LEFT_REVERSE_PIN);
-// 			PORTD->PCR[LEFT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
-// 			onPin(RIGHT_REVERSE_PIN);
-// 			PORTD->PCR[RIGHT_FORWARD_PIN] &= ~PORT_PCR_MUX_MASK;
-// 	}
-// }
-
 
 void controlDirectionMovement() {
-	changeMotorSpeed();
+	//changeMotorSpeed();
 	switch(directionState) {
 		case FRONTLEFT:
-			onPin(LEFT_FORWARD_PIN);
+			changeMotorSpeed();
+			offPin(LEFT_FORWARD_PIN);
 			offPin(LEFT_REVERSE_PIN);
 			onPin(RIGHT_FORWARD_PIN);
 			offPin(RIGHT_REVERSE_PIN);
-			LEFT_FORWARD = RIGHT_FORWARD * DIAG_COEFF;
 			offRGB();
-			ledControl(RED_LED);
+			ledControl(GREEN_LED);
 			break;
 		case FRONT:
+			changeMotorSpeed();
 			onPin(LEFT_FORWARD_PIN);
 			offPin(LEFT_REVERSE_PIN);
 			onPin(RIGHT_FORWARD_PIN);
@@ -187,21 +125,21 @@ void controlDirectionMovement() {
 			offRGB();
 			break;
 		case FRONTRIGHT:
+			changeMotorSpeed();
 			onPin(LEFT_FORWARD_PIN);
 			offPin(LEFT_REVERSE_PIN);
-			onPin(RIGHT_FORWARD_PIN);
+			offPin(RIGHT_FORWARD_PIN);
 			offPin(RIGHT_REVERSE_PIN);
-			RIGHT_FORWARD = LEFT_FORWARD * DIAG_COEFF;
 			offRGB();
-			ledControl(RED_LED);
+			ledControl(GREEN_LED);
 			break;
 		case LEFT:
+			LEFT_REVERSE = DUTY_CYCLE(MOD_VALUE, 80);
+			RIGHT_FORWARD = DUTY_CYCLE(MOD_VALUE, 80);
 			onPin(LEFT_REVERSE_PIN);
 			offPin(LEFT_FORWARD_PIN);
 			onPin(RIGHT_FORWARD_PIN);
 			offPin(RIGHT_REVERSE_PIN);
-			LEFT_REVERSE = LEFT_REVERSE * TURN_COEFF;
-			RIGHT_FORWARD = RIGHT_FORWARD * TURN_COEFF;
 			offRGB();
 			break;
 		case STOP:
@@ -211,37 +149,38 @@ void controlDirectionMovement() {
 			offPin(RIGHT_REVERSE_PIN);
 			offRGB();
 			break;
-		case RIGHT:	
+		case RIGHT:
+			LEFT_FORWARD = DUTY_CYCLE(MOD_VALUE, 80);
+			RIGHT_REVERSE = DUTY_CYCLE(MOD_VALUE, 80);
 			onPin(LEFT_FORWARD_PIN);
 			offPin(LEFT_REVERSE_PIN);
-			onPin(RIGHT_REVERSE_PIN);
-			offPin(RIGHT_FORWARD_PIN);
-			LEFT_FORWARD = LEFT_FORWARD * TURN_COEFF;
-			RIGHT_REVERSE = RIGHT_REVERSE * TURN_COEFF;
-			offRGB();
-			break;
-		case BACKLEFT:
-			onPin(LEFT_REVERSE_PIN);
-			offPin(LEFT_FORWARD_PIN);
-			onPin(RIGHT_REVERSE_PIN);
-			offPin(RIGHT_FORWARD_PIN);
-			RIGHT_REVERSE = LEFT_REVERSE * DIAG_COEFF;
-			offRGB();
-			ledControl(GREEN_LED);
-			break;
-		case BACK:
-			onPin(LEFT_REVERSE_PIN);
-			offPin(LEFT_FORWARD_PIN);
 			onPin(RIGHT_REVERSE_PIN);
 			offPin(RIGHT_FORWARD_PIN);
 			offRGB();
 			break;
 		case BACKRIGHT:
+			changeMotorSpeed();
+			onPin(LEFT_REVERSE_PIN);
+			offPin(LEFT_FORWARD_PIN);
+			offPin(RIGHT_REVERSE_PIN);
+			offPin(RIGHT_FORWARD_PIN);
+			offRGB();
+			ledControl(GREEN_LED);
+			break;
+		case BACK:
+			changeMotorSpeed();
 			onPin(LEFT_REVERSE_PIN);
 			offPin(LEFT_FORWARD_PIN);
 			onPin(RIGHT_REVERSE_PIN);
 			offPin(RIGHT_FORWARD_PIN);
-			LEFT_REVERSE = RIGHT_REVERSE * DIAG_COEFF;
+			offRGB();
+			break;
+		case BACKLEFT:
+			changeMotorSpeed();
+			offPin(LEFT_REVERSE_PIN);
+			offPin(LEFT_FORWARD_PIN);
+			onPin(RIGHT_REVERSE_PIN);
+			offPin(RIGHT_FORWARD_PIN);
 			offRGB();
 			ledControl(GREEN_LED);
 			break;
